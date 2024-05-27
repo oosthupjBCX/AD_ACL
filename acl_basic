@@ -1,0 +1,32 @@
+from ldap3 import Server, Connection, ALL
+import ssl
+
+computer_distinguishedname = ""
+domain_controller = "________-DC01.domain.co.za"
+domain_user = "CN=username,OU=Service Accounts,DC=domain,DC=co,DC=za"
+domain_password = "password"
+domain = "dc=domain,dc=co,dc=za"
+computer = "OSD-000095"
+
+def process_computer(computer_name):
+    is_connection_bound = False
+    computer_name = computer_name.upper()
+    server = Server(domain_controller, use_ssl=True, get_info=ALL)
+    conn = Connection(server, domain_user, domain_password, auto_bind=False)
+   
+    try:
+        is_connection_bound = conn.bind()
+    except Exception as error:
+        print(error)
+
+    if is_connection_bound == True:
+        conn.search(domain, '(&(objectclass=computer)(cn=' + computer_name +'))', attributes=['distinguishedname','useraccountcontrol','ntSecurityDescriptor'])
+    if len(conn.entries) > 0:
+        print("distinguishedname")
+        print(conn.entries[0].distinguishedname.value)
+        print("useraccountcontrol:")
+        print(conn.entries[0].useraccountcontrol.value)
+        print("ACL for computer object:")
+        print(conn.entries[0].ntSecurityDescriptor.value)
+
+process_computer(computer)
